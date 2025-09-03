@@ -18,6 +18,15 @@ class SplineRound(DiskBase):
     n_outer_spline_points = 20
     n_straight_spline_points = 10
 
+    # core ratios
+    _core_ratio_1: float = None
+    _core_ratio_1_min: float = 0.5
+    _core_ratio_1_max: float = 0.9
+
+    _core_ratio_2: float = None
+    _core_ratio_2_min: float = 0.5
+    _core_ratio_2_max: float = 0.9
+
     # Widths only used for rings
     width_1: float = 0
     width_2: float = 0
@@ -134,7 +143,7 @@ class SplineRound(DiskBase):
         center: Optional[NPPointType] = None,
         reverse: bool = False,
     ) -> NPPointListType:
-        """Creates the spline points for the core."""
+        """Creates the spline points for the oval/elliptical part."""
         p_0 = np.asarray(p_radius)
         p_1 = np.asarray(p_diagonal)
         center = self.origo if center is None else np.asarray(center)
@@ -204,21 +213,23 @@ class SplineRound(DiskBase):
 
     def add_inner_spline_edges(self, center: Optional[NPPointType] = None) -> None:
         """Add curved edge as spline to inside of ring"""
-        sides = [self.side_1, self.side_2, self.side_2, self.side_1]
-        radi = [
-            self.radius_1 - self.width_1,
-            self.radius_2 - self.width_2,
-            self.radius_2 - self.width_2,
-            self.radius_1 - self.width_1,
-        ]
+
+        sides = [self.side_1, self.side_2]
+        radi = [self.radius_1 - self.width_1, self.radius_2 - self.width_2]
         for i, face in enumerate(self.shell):
-            p_0 = face.point_array[0 if i % 2 == 0 else 3]  # Inner point on radius
-            p_1 = face.point_array[3 if i % 2 == 0 else 0]  # Inner point on diagonal
+            p_0 = face.point_array[(i % 2) * 3]  # Outer point on radius
+            p_1 = face.point_array[((i + 1) % 2) * 3]  # Outer point on diagonal
 
             spline_curve_0_1 = self.outer_spline(
-                p_0, p_1, radi[i % 4], sides[i % 4], radi[(i + 1) % 4], sides[(i + 1) % 4], center, reverse=i % 2 == 1
+                p_0,
+                p_1,
+                radi[int((i + 1) / 2) % 2],
+                sides[int((i + 1) / 2) % 2],
+                radi[int((i + 3) / 2) % 2],
+                sides[int((i + 3) / 2) % 2],
+                center,
+                reverse=i % 2 == 1,
             )
-
             face.add_edge(3, Spline(spline_curve_0_1))
 
     def add_edges(self) -> None:
@@ -292,6 +303,40 @@ class SplineRound(DiskBase):
     @u_2.setter
     def u_2(self, vec):
         self._u_2 = f.unit_vector(vec)
+
+    @property
+    def core_ratio_1(self):
+        if self._core_ratio_1:
+            return self._core_ratio_1
+        else:
+            r_1 = self.radius_1 - self.side_1
+            r_2 = self.radius_2 - self.side_2
+            return max(min(r_1 / r_2 * self.core_ratio, self._core_ratio_1_max), self._core_ratio_1_min)
+
+    @core_ratio_1.setter
+    def core_ratio_1(self, value: float):
+        self._core_ratio_1 = float(value)
+
+    @property
+    def core_ratio_2(self):
+        if self._core_ratio_2:
+            return self._core_ratio_2
+        else:
+            r_1 = self.radius_1 - self.side_1
+            r_2 = self.radius_2 - self.side_2
+            return max(min(r_2 / r_1 * self.core_ratio, self._core_ratio_2_max), self._core_ratio_2_min)
+
+    @core_ratio_2.setter
+    def core_ratio_2(self, value: float):
+        self._core_ratio_2 = float(value)
+
+    @property
+    def diagonal_ratio_1(self) -> float:
+        return 2**0.5 * self.spline_ratios[7] / 0.8 * self.core_ratio_1
+
+    @property
+    def diagonal_ratio_2(self) -> float:
+        return 2**0.5 * self.spline_ratios[7] / 0.8 * self.core_ratio_2
 
     def scale(self, ratio: float, origin: Optional[PointType] = None):
         """Reimplementation of scale to include side_1 and side_2."""
@@ -410,19 +455,19 @@ class HalfSplineDisk(SplineRound, HalfDisk):
 
         pos = self.positions
         # Core
-        pos[1] = self.center + (self.side_1 + self.core_ratio * r_1) * self.u_1
+        pos[1] = self.center + (self.side_1 + self.core_ratio_1 * r_1) * self.u_1
         pos[2] = (
             self.center
-            + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio * r_1) * self.u_1
-            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio * r_2) * self.u_2
+            + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
+            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2) * self.u_2
         )
-        pos[3] = self.center + (self.side_2 + self.core_ratio * r_2) * self.u_2
+        pos[3] = self.center + (self.side_2 + self.core_ratio_2 * r_2) * self.u_2
         pos[4] = (
             self.center
-            - (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio * r_1) * self.u_1
-            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio * r_2) * self.u_2
+            - (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
+            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2) * self.u_2
         )
-        pos[5] = self.center - (self.side_1 + self.core_ratio * r_1) * self.u_1
+        pos[5] = self.center - (self.side_1 + self.core_ratio_1 * r_1) * self.u_1
 
         # Shell
         pos[7] = (
