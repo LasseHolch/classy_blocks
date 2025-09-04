@@ -117,6 +117,34 @@ class EighthSphere(Shape):
             rotated_core.append(rotated_eighth[0])
             rotated_shell += rotated_eighth[1:]
 
+            # Ensure points coincide with those of previous eight
+            if i > 0:
+                # Core
+                pos = rotated_core[i].point_array
+                pos[0] = rotated_core[i - 1].point_array[0]
+                pos[1] = rotated_core[i - 1].point_array[3]
+                pos[4] = rotated_core[i - 1].point_array[4]
+                pos[5] = rotated_core[i - 1].point_array[7]
+                rotated_core[i].bottom_face.update(pos[:4])
+                rotated_core[i].top_face.update(pos[4:])
+
+                # Shell
+                pos = rotated_shell[i * (len(rotated_eighth) - 1)].point_array
+                pos[0] = rotated_shell[(i - 1) * (len(rotated_eighth) - 1) + 1].point_array[3]
+                pos[1] = rotated_shell[(i - 1) * (len(rotated_eighth) - 1) + 1].point_array[2]
+                pos[4] = rotated_shell[(i - 1) * (len(rotated_eighth) - 1) + 1].point_array[7]
+                pos[5] = rotated_shell[(i - 1) * (len(rotated_eighth) - 1) + 1].point_array[6]
+                rotated_shell[i * (len(rotated_eighth) - 1)].bottom_face.update(pos[:4])
+                rotated_shell[i * (len(rotated_eighth) - 1)].top_face.update(pos[4:])
+
+                pos = rotated_shell[i * (len(rotated_eighth) - 1) + 2].point_array
+                pos[0] = rotated_shell[(i - 1) * (len(rotated_eighth) - 1) + 2].point_array[7]
+                pos[1] = rotated_shell[(i - 1) * (len(rotated_eighth) - 1) + 2].point_array[6]
+                pos[4] = rotated_shell[(i - 1) * (len(rotated_eighth) - 1) + 2].point_array[4]
+                pos[5] = rotated_shell[(i - 1) * (len(rotated_eighth) - 1) + 2].point_array[5]
+                rotated_shell[i * (len(rotated_eighth) - 1) + 2].bottom_face.update(pos[:4])
+                rotated_shell[i * (len(rotated_eighth) - 1) + 2].top_face.update(pos[4:])
+
         self.lofts = rotated_core + rotated_shell
 
     ### Chopping
