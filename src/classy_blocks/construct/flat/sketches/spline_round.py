@@ -69,9 +69,13 @@ class SplineRound(DiskBase):
         # Create unitary points of p_0 and p_1
         r_1 = radius_1 - side_1
         r_2 = radius_2 - side_2
-        p_0_u = np.array([0, side_1 + self.core_ratio * r_1, 0])
+        p_0_u = np.array([0, side_1 + self.core_ratio_1 * r_1, 0])
         p_1_u = np.array(
-            [0, side_1 + 2 ** (-1 / 2) * self.diagonal_ratio * r_1, side_2 + 2 ** (-1 / 2) * self.diagonal_ratio * r_2]
+            [
+                0,
+                side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1,
+                side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2,
+            ]
         )
 
         # In case of oval shape the center and p_0 used to get the curvy spline are adjusted
