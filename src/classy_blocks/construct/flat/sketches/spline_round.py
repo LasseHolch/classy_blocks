@@ -66,6 +66,7 @@ class SplineRound(DiskBase):
         p_0 = np.asarray(p_core_ratio)
         p_1 = np.asarray(p_diagonal_ratio)
 
+        print(self.side_1, side_1, self.side_2, side_2)
         # Create unitary points of p_0 and p_1
         r_1 = radius_1 - side_1
         r_2 = radius_2 - side_2
