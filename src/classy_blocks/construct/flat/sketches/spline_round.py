@@ -156,7 +156,7 @@ class SplineRound(DiskBase):
         r_1 = radius_1 - side_1
         r_2 = radius_2 - side_2
         ratio = min(max(r_1 / r_2, self._core_ratio_1_min / self.core_ratio), self._core_ratio_1_max / self.core_ratio)
-
+        print(ratio, center)
         p_0_u = np.array([0, radius_1, 0])
         p_1_u = np.array([0, side_1 + np.cos(ratio * np.pi / 4) * r_1, side_2 + np.sin(ratio * np.pi / 4) * r_2])
 
