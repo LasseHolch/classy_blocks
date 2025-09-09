@@ -161,11 +161,7 @@ class SplineRound(DiskBase):
         p_0_u_adj = p_0_u + np.array([0, 0, side_2])
         c_0_u_adj = np.array([0, side_1, side_2])
 
-        theta = np.linspace(
-            0,
-            min(max(r_1 / r_2, self._core_ratio_1_min), self._core_ratio_1_max) * np.pi / 4,
-            self.n_outer_spline_points,
-        )
+        theta = np.linspace(0, np.pi / 4, self.n_outer_spline_points)
         spline_points_u = c_0_u_adj + np.array([np.zeros(len(theta)), r_1 * np.cos(theta), r_2 * np.sin(theta)]).T
 
         if reverse:
@@ -480,14 +476,14 @@ class HalfSplineDisk(SplineRound, HalfDisk):
         # Shell
         pos[7] = (
             self.center
-            + (self.side_1 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
-            + (self.side_2 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
+            + (self.side_1 + np.cos(np.pi / 4) * r_1) * self.u_1
+            + (self.side_2 + np.sin(np.pi / 4) * r_2) * self.u_2
         )
         pos[8] = corner_2_point
         pos[9] = (
             self.center
-            - (self.side_1 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
-            + (self.side_2 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
+            - (self.side_1 + np.cos(np.pi / 4) * r_1) * self.u_1
+            + (self.side_2 + np.sin(np.pi / 4) * r_2) * self.u_2
         )
 
         self.update(pos)
