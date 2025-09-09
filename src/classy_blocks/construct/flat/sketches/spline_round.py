@@ -476,13 +476,13 @@ class HalfSplineDisk(SplineRound, HalfDisk):
         # Shell
         pos[7] = (
             self.center
-            + (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 2) * r_1) * self.u_1
-            + (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 2) * r_2) * self.u_2
+            + (self.side_1 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 2) * r_1) * self.u_1
+            + (self.side_2 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 2) * r_2) * self.u_2
         )
         pos[8] = corner_2_point
         pos[9] = (
             self.center
-            - (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 2) * r_1) * self.u_1
+            - (self.side_1 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 2) * r_1) * self.u_1
             + (self.side_2 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 2) * r_2) * self.u_2
         )
 
