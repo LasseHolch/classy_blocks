@@ -167,7 +167,7 @@ class SplineRound(DiskBase):
         spline_points_u = (
             c_0_u_adj + np.array([np.zeros(len(theta)), r_1 * np.cos(ratio * theta), r_2 * np.sin(ratio * theta)]).T
         )
-        print(spline_points_u)
+        print(center, spline_points_u)
         if reverse:
             spline_points_u = spline_points_u[::-1]
             # Add straight part for ovals
