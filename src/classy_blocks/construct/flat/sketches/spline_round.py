@@ -165,7 +165,7 @@ class SplineRound(DiskBase):
 
         theta = np.linspace(0, np.pi / 4, self.n_outer_spline_points)
         spline_points_u = (
-            c_0_u_adj + np.array([np.zeros(len(theta)), r_1 * np.cos(ratio, theta), r_2 * np.sin(ratio * theta)]).T
+            c_0_u_adj + np.array([np.zeros(len(theta)), r_1 * np.cos(ratio * theta), r_2 * np.sin(ratio * theta)]).T
         )
 
         if reverse:
