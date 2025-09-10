@@ -155,6 +155,16 @@ class SplineRound(DiskBase):
         # Create unitary points of p_0 and p_1
         r_1 = radius_1 - side_1
         r_2 = radius_2 - side_2
+
+        c_adj = (
+            center
+            + side_1 * f.unit_vector(p_0 - center)
+            + side_2
+            * f.unit_vector(
+                p_1 - center - np.dot(p_1 - center, f.unit_vector(p_0 - center)) * f.unit_vector(p_0 - center)
+            )
+        )
+        angle = abs(np.dot(p_0 - c_adj, p_1 - c_adj))
         ratio = min(max(r_1 / r_2, self._core_ratio_1_min / self.core_ratio), self._core_ratio_1_max / self.core_ratio)
         print(center, ratio)
 
@@ -164,10 +174,8 @@ class SplineRound(DiskBase):
         p_0_u_adj = p_0_u + np.array([0, 0, side_2])
         c_0_u_adj = np.array([0, side_1, side_2])
 
-        theta = np.linspace(0, np.pi / 4, self.n_outer_spline_points)
-        spline_points_u = (
-            c_0_u_adj + np.array([np.zeros(len(theta)), r_1 * np.cos(ratio * theta), r_2 * np.sin(ratio * theta)]).T
-        )
+        theta = np.linspace(0, angle, self.n_outer_spline_points)
+        spline_points_u = c_0_u_adj + np.array([np.zeros(len(theta)), r_1 * np.cos(theta), r_2 * np.sin(theta)]).T
 
         if reverse:
             spline_points_u = spline_points_u[::-1]
