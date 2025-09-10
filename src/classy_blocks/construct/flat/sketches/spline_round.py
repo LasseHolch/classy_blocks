@@ -164,9 +164,9 @@ class SplineRound(DiskBase):
                 p_1 - center - np.dot(p_1 - center, f.unit_vector(p_0 - center)) * f.unit_vector(p_0 - center)
             )
         )
-        angle = np.arccos(np.dot(f.unit_vector(p_0 - c_adj), f.unit_vector(p_1 - c_adj)))
+        angle = abs(np.arccos(np.dot(f.unit_vector(p_0 - c_adj), f.unit_vector(p_1 - c_adj))))
         ratio = min(max(r_1 / r_2, self._core_ratio_1_min / self.core_ratio), self._core_ratio_1_max / self.core_ratio)
-        print(center, ratio)
+        print(center, angle)
 
         p_0_u = np.array([0, radius_1, 0])
         p_1_u = np.array([0, side_1 + np.cos(ratio * np.pi / 4) * r_1, side_2 + np.sin(ratio * np.pi / 4) * r_2])
