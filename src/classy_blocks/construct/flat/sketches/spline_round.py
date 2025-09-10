@@ -165,6 +165,8 @@ class SplineRound(DiskBase):
             )
         )
         angle = abs(np.arccos(np.dot(f.unit_vector(p_0 - c_adj), f.unit_vector(p_1 - c_adj))))
+        if reverse:
+            angle = np.pi / 2 - angle
         ratio = min(max(r_1 / r_2, self._core_ratio_1_min / self.core_ratio), self._core_ratio_1_max / self.core_ratio)
         print(center, angle)
 
