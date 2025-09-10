@@ -163,11 +163,12 @@ class SplineRound(DiskBase):
 
         angle = abs(np.arctan(np.dot(p_1 - c_adj, u_1) * r_1 / (np.dot(p_1 - c_adj, u_0) * r_2)))
 
-        ratio = min(max(r_1 / r_2, self._core_ratio_1_min / self.core_ratio), self._core_ratio_1_max / self.core_ratio)
+        # ratio = min(max(r_1 / r_2, self._core_ratio_1_min / self.core_ratio),
+        # self._core_ratio_1_max / self.core_ratio)
         print(center, angle / np.pi)
 
         p_0_u = np.array([0, radius_1, 0])
-        p_1_u = np.array([0, side_1 + np.cos(ratio * np.pi / 4) * r_1, side_2 + np.sin(ratio * np.pi / 4) * r_2])
+        p_1_u = np.array([0, side_1 + np.cos(angle) * r_1, side_2 + np.sin(angle) * r_2])
 
         p_0_u_adj = p_0_u + np.array([0, 0, side_2])
         c_0_u_adj = np.array([0, side_1, side_2])
