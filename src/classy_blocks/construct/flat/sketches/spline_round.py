@@ -20,11 +20,11 @@ class SplineRound(DiskBase):
 
     # core ratios
     _core_ratio_1: float = None
-    _core_ratio_1_min: float = 0.7
+    _core_ratio_1_min: float = 0.6
     _core_ratio_1_max: float = 0.9
 
     _core_ratio_2: float = None
-    _core_ratio_2_min: float = 0.7
+    _core_ratio_2_min: float = 0.6
     _core_ratio_2_max: float = 0.9
 
     # Widths only used for rings
