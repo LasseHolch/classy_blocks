@@ -471,7 +471,7 @@ class HalfSplineDisk(SplineRound, HalfDisk):
             + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
             + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2) * self.u_2
         )
-        pos[3] = self.center + (self.side_2 + self.core_ratio_2 * r_2) * self.u_2
+        pos[3] = self.center + (self.side_2 + self.core_ratio_1 * r_2) * self.u_2
         pos[4] = (
             self.center
             - (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
