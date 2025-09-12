@@ -1,6 +1,7 @@
 from typing import ClassVar, Optional
 
 import numpy as np
+from scipy.optimize import Bounds, minimize
 
 from classy_blocks.cbtyping import NPPointListType, NPPointType, NPVectorType, PointType
 from classy_blocks.construct.edges import Origin, Spline
@@ -315,12 +316,47 @@ class SplineRound(DiskBase):
         self._u_2 = f.unit_vector(vec)
 
     @property
+    def optimized_core_ratios(self) -> tuple[float]:
+        r_1 = self.radius_1 - self.side_1
+        r_2 = self.radius_2 - self.side_2
+
+        def shell_d_1(ratio_1: float) -> float:
+            return r_1 * (1 - ratio_1)
+
+        def shell_d_2(ratio_2: float) -> float:
+            return r_2 * (1 - ratio_2)
+
+        def shell_d_d(ratio_1: float, ratio_2: float) -> float:
+            res = (
+                (r_1 * np.cos(ratio_1 / ratio_2 * np.pi / 4) - self.diagonal_ratio / self.core_ratio * ratio_1 * r_1)
+                ** 2
+                + (r_2 * np.sin(ratio_1 / ratio_2 * np.pi / 4) - self.diagonal_ratio / self.core_ratio * ratio_2 * r_2)
+                ** 2
+            ) ** (1 / 2)
+            return res
+
+        def min_func(ratio_1: float, ratio_2: float) -> float:
+            res = (shell_d_d(ratio_1, ratio_2) - shell_d_1(ratio_1)) ** 2 + (
+                (shell_d_d(ratio_1, ratio_2) - shell_d_2(ratio_2)) ** 2
+            )
+            return res
+
+        bounds = Bounds(
+            [self._core_ratio_1_min, self._core_ratio_2_min], [self._core_ratio_1_max, self._core_ratio_2_max]
+        )
+
+        res = minimize(min_func, [self.core_ratio] * 2, bounds=bounds)
+        ratios = res.x
+        return ratios[0], ratios[1]
+
+    @property
     def core_ratio_1(self):
         if self._core_ratio_1:
             return self._core_ratio_1
         else:
             r_1 = self.radius_1 - self.side_1
             r_2 = self.radius_2 - self.side_2
+            return self.optimized_core_ratios[0]
             return max(min(r_1 / r_2 * self.core_ratio, self._core_ratio_1_max), self._core_ratio_1_min)
 
     @core_ratio_1.setter
@@ -334,6 +370,7 @@ class SplineRound(DiskBase):
         else:
             r_1 = self.radius_1 - self.side_1
             r_2 = self.radius_2 - self.side_2
+            return self.optimized_core_ratios[1]
             return max(min(r_2 / r_1 * self.core_ratio, self._core_ratio_2_max), self._core_ratio_2_min)
 
     @core_ratio_2.setter
@@ -471,7 +508,7 @@ class HalfSplineDisk(SplineRound, HalfDisk):
             + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
             + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2) * self.u_2
         )
-        pos[3] = self.center + (self.side_2 + self.core_ratio_1 * r_2) * self.u_2
+        pos[3] = self.center + (self.side_2 + self.core_ratio_2 * r_2) * self.u_2
         pos[4] = (
             self.center
             - (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
