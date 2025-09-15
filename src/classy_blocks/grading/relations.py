@@ -100,7 +100,7 @@ def get_count__start_size__c2c_expansion(length, start_size, c2c_expansion):
     _validate_start_end_size(start_size, "start")
     _validate_c2c_expansion(c2c_expansion)
 
-    mu = 1e-3
+    mu = 1e-2
     # Check valid combination of length, start_size and c2c_expansion
     if 1 - length / start_size * (1 - c2c_expansion) <= 0:
         # Adjust c2c_expansion to smallest possible
@@ -128,7 +128,7 @@ def get_count__end_size__c2c_expansion(length, end_size, c2c_expansion):
     # Check valid combination of length, start_size and c2c_expansion
     if 1 / (1 + length / end_size * (1 - c2c_expansion) / c2c_expansion) <= 0:
         # Adjust c2c_expansion to smallest possible
-        mu = 1e-3
+        mu = 1e-2
         c2c_expansion_adj = mu * length / (1 + end_size * (1 - mu))
         count = np.log(1 / (1 + length / end_size * (1 - c2c_expansion) / c2c_expansion)) / np.log(c2c_expansion)
         print(
