@@ -72,6 +72,7 @@ class SplineRound(DiskBase):
         diagonal_ratio_1 = self.diagonal_ratio_1
         diagonal_ratio_2 = self.diagonal_ratio_2
         if side_2 == self.side_1:
+            print("lllllllll")
             core_ratio_1 = self.core_ratio_2
             diagonal_ratio_1 = self.diagonal_ratio_2
             diagonal_ratio_2 = self.diagonal_ratio_1
