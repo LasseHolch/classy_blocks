@@ -103,7 +103,7 @@ def get_count__start_size__c2c_expansion(length, start_size, c2c_expansion):
     # Check valid combination of length, start_size and c2c_expansion
     if 1 - length / start_size * (1 - c2c_expansion) <= 0:
         # Adjust c2c_expansion to smallest possible
-        c2c_expansion_adj = 1 - start_size / length + 1e-9
+        c2c_expansion_adj = 1 - start_size / length + 1e-5
         print(
             f"Invalid combination of length = {length}, start_size = {start_size}, "
             f"and c2c_expansion {c2c_expansion}.\n c2c_expansion changed to {c2c_expansion_adj}."
