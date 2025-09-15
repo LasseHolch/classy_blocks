@@ -105,9 +105,11 @@ def get_count__start_size__c2c_expansion(length, start_size, c2c_expansion):
     if 1 - length / start_size * (1 - c2c_expansion) <= 0:
         # Adjust c2c_expansion to smallest possible
         c2c_expansion_adj = 1 - start_size / length + mu
+        count = np.log(1 - length / start_size * (1 - c2c_expansion_adj)) / np.log(c2c_expansion_adj)
         print(
             f"Invalid combination of length = {length}, start_size = {start_size}, "
-            f"and c2c_expansion {c2c_expansion}.\n c2c_expansion changed to {c2c_expansion_adj}."
+            f"and c2c_expansion {c2c_expansion}.\n c2c_expansion changed to {c2c_expansion_adj} "
+            f"giving count {int(count) + 1}."
         )
         c2c_expansion = c2c_expansion_adj
 
