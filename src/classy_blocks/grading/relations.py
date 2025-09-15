@@ -100,10 +100,11 @@ def get_count__start_size__c2c_expansion(length, start_size, c2c_expansion):
     _validate_start_end_size(start_size, "start")
     _validate_c2c_expansion(c2c_expansion)
 
+    mu = 1e-3
     # Check valid combination of length, start_size and c2c_expansion
     if 1 - length / start_size * (1 - c2c_expansion) <= 0:
         # Adjust c2c_expansion to smallest possible
-        c2c_expansion_adj = 1 - start_size / length + 1e-5
+        c2c_expansion_adj = 1 - start_size / length + mu
         print(
             f"Invalid combination of length = {length}, start_size = {start_size}, "
             f"and c2c_expansion {c2c_expansion}.\n c2c_expansion changed to {c2c_expansion_adj}."
@@ -125,7 +126,7 @@ def get_count__end_size__c2c_expansion(length, end_size, c2c_expansion):
     # Check valid combination of length, start_size and c2c_expansion
     if 1 / (1 + length / end_size * (1 - c2c_expansion) / c2c_expansion) <= 0:
         # Adjust c2c_expansion to smallest possible
-        mu = 1e-9
+        mu = 1e-3
         c2c_expansion_adj = mu * length / (1 + end_size * (1 - mu))
         print(
             f"Invalid combination of length = {length}, end_size = {end_size}, "
