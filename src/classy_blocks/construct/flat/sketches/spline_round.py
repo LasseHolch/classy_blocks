@@ -335,7 +335,9 @@ class SplineRound(DiskBase):
             ) ** (1 / 2)
             return res
 
-        def min_func(ratio_1: float, ratio_2: float) -> float:
+        def min_func(r: list[float]) -> float:
+            ratio_1 = r[0]
+            ratio_2 = r[1]
             res = (shell_d_d(ratio_1, ratio_2) - shell_d_1(ratio_1)) ** 2 + (
                 (shell_d_d(ratio_1, ratio_2) - shell_d_2(ratio_2)) ** 2
             )
