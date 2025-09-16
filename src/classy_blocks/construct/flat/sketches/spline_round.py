@@ -119,6 +119,8 @@ class SplineRound(DiskBase):
         u_1 = p_1 - self.center - np.dot(p_1 - self.center, f.unit_vector(u_0)) * f.unit_vector(u_0)
 
         spline_points_new = self.center + spline_d_0_org * u_0 + spline_d_1_org * u_1
+
+        print(p_0_u_adj, p_0, p_1_u, p_1)
         return spline_points_new
 
     def add_core_spline_edges(self) -> None:
