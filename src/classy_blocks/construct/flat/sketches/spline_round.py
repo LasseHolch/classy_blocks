@@ -120,7 +120,7 @@ class SplineRound(DiskBase):
 
         spline_points_new = self.center + spline_d_0_org * u_0 + spline_d_1_org * u_1
 
-        print(p_0_u_adj, p_0, p_1_u, p_1)
+        print(p_0_u_adj, p_0, p_1_u, p_1, core_ratio_1, diagonal_ratio_1, diagonal_ratio_2)
         return spline_points_new
 
     def add_core_spline_edges(self) -> None:
@@ -536,7 +536,7 @@ class HalfSplineDisk(SplineRound, HalfDisk):
             - (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
             + (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
         )
-        print("correct Disc", pos[1], pos[2])
+        print("correct Disc", self.core_ratio_1, self.core_ratio_2, self.diagonal_ratio_1, self.diagonal_ratio_2)
         self.update(pos)
 
 
