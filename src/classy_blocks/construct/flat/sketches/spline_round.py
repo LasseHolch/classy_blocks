@@ -68,24 +68,23 @@ class SplineRound(DiskBase):
         p_1 = np.asarray(p_diagonal_ratio)
 
         # Correct core ratios
-        core_ratio_1 = self.core_ratio_1
-        diagonal_ratio_1 = self.diagonal_ratio_1
-        diagonal_ratio_2 = self.diagonal_ratio_2
-        if side_2 == self.side_1:
-            print("lllllllll")
-            core_ratio_1 = self.core_ratio_2
-            diagonal_ratio_1 = self.diagonal_ratio_2
-            diagonal_ratio_2 = self.diagonal_ratio_1
+        # core_ratio_1 = self.core_ratio_1
+        # diagonal_ratio_1 = self.diagonal_ratio_1
+        # diagonal_ratio_2 = self.diagonal_ratio_2
+        # if side_2 == self.side_1:
+        # core_ratio_1 = self.core_ratio_2
+        # diagonal_ratio_1 = self.diagonal_ratio_2
+        # diagonal_ratio_2 = self.diagonal_ratio_1
 
         # Create unitary points of p_0 and p_1
         r_1 = radius_1 - side_1
         r_2 = radius_2 - side_2
-        p_0_u = np.array([0, side_1 + core_ratio_1 * r_1, 0])
+        p_0_u = np.array([0, side_1 + self.core_ratio * r_1, 0])
         p_1_u = np.array(
             [
                 0,
-                side_1 + 2 ** (-1 / 2) * diagonal_ratio_1 * r_1,
-                side_2 + 2 ** (-1 / 2) * diagonal_ratio_2 * r_2,
+                side_1 + 2 ** (-1 / 2) * self.diagonal_ratio * r_1,
+                side_2 + 2 ** (-1 / 2) * self.diagonal_ratio * r_2,
             ]
         )
 
@@ -366,10 +365,7 @@ class SplineRound(DiskBase):
         if self._core_ratio_1:
             return self._core_ratio_1
         else:
-            r_1 = self.radius_1 - self.side_1
-            r_2 = self.radius_2 - self.side_2
             return self.optimized_core_ratios[0]
-            return max(min(r_1 / r_2 * self.core_ratio, self._core_ratio_1_max), self._core_ratio_1_min)
 
     @core_ratio_1.setter
     def core_ratio_1(self, value: float):
@@ -380,10 +376,7 @@ class SplineRound(DiskBase):
         if self._core_ratio_2:
             return self._core_ratio_2
         else:
-            r_1 = self.radius_1 - self.side_1
-            r_2 = self.radius_2 - self.side_2
             return self.optimized_core_ratios[1]
-            return max(min(r_2 / r_1 * self.core_ratio, self._core_ratio_2_max), self._core_ratio_2_min)
 
     @core_ratio_2.setter
     def core_ratio_2(self, value: float):
@@ -531,14 +524,14 @@ class HalfSplineDisk(SplineRound, HalfDisk):
         # Shell
         pos[7] = (
             self.center
-            + (self.side_1 + np.sin(np.pi / 4) * r_1) * self.u_1
-            + (self.side_2 + np.cos(np.pi / 4) * r_2) * self.u_2
+            + (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
+            + (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
         )
         pos[8] = corner_2_point
         pos[9] = (
             self.center
-            - (self.side_1 + np.sin(np.pi / 4) * r_1) * self.u_1
-            + (self.side_2 + np.cos(np.pi / 4) * r_2) * self.u_2
+            - (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
+            + (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
         )
 
         self.update(pos)
