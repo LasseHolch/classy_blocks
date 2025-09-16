@@ -28,6 +28,8 @@ class SplineRound(DiskBase):
     _core_ratio_2_min: float = 0.6
     _core_ratio_2_max: float = 0.9
 
+    _optimized_core_ratios: list[float] = None
+
     # Widths only used for rings
     width_1: float = 0
     width_2: float = 0
@@ -329,39 +331,47 @@ class SplineRound(DiskBase):
 
     @property
     def optimized_core_ratios(self) -> tuple[float]:
-        r_1 = self.radius_1 - self.side_1
-        r_2 = self.radius_2 - self.side_2
+        if self._optimized_core_ratios is None:
+            r_1 = self.radius_1 - self.side_1
+            r_2 = self.radius_2 - self.side_2
 
-        def shell_d_1(ratio_1: float) -> float:
-            return r_1 * (1 - ratio_1)
+            def shell_d_1(ratio_1: float) -> float:
+                return r_1 * (1 - ratio_1)
 
-        def shell_d_2(ratio_2: float) -> float:
-            return r_2 * (1 - ratio_2)
+            def shell_d_2(ratio_2: float) -> float:
+                return r_2 * (1 - ratio_2)
 
-        def shell_d_d(ratio_1: float, ratio_2: float) -> float:
-            res = (
-                (r_1 * np.cos(ratio_1 / ratio_2 * np.pi / 4) - self.diagonal_ratio / self.core_ratio * ratio_1 * r_1)
-                ** 2
-                + (r_2 * np.sin(ratio_1 / ratio_2 * np.pi / 4) - self.diagonal_ratio / self.core_ratio * ratio_2 * r_2)
-                ** 2
-            ) ** (1 / 2)
-            return res
+            def shell_d_d(ratio_1: float, ratio_2: float) -> float:
+                res = (
+                    (
+                        r_1 * np.cos(ratio_1 / ratio_2 * np.pi / 4)
+                        - self.diagonal_ratio / self.core_ratio * ratio_1 * r_1
+                    )
+                    ** 2
+                    + (
+                        r_2 * np.sin(ratio_1 / ratio_2 * np.pi / 4)
+                        - self.diagonal_ratio / self.core_ratio * ratio_2 * r_2
+                    )
+                    ** 2
+                ) ** (1 / 2)
+                return res
 
-        def min_func(r: list[float]) -> float:
-            ratio_1 = r[0]
-            ratio_2 = r[1]
-            res = (shell_d_d(ratio_1, ratio_2) - shell_d_1(ratio_1)) ** 2 + (
-                (shell_d_d(ratio_1, ratio_2) - shell_d_2(ratio_2)) ** 2
+            def min_func(r: list[float]) -> float:
+                ratio_1 = r[0]
+                ratio_2 = r[1]
+                res = (shell_d_d(ratio_1, ratio_2) - shell_d_1(ratio_1)) ** 2 + (
+                    (shell_d_d(ratio_1, ratio_2) - shell_d_2(ratio_2)) ** 2
+                )
+                return res
+
+            bounds = Bounds(
+                [self._core_ratio_1_min, self._core_ratio_2_min], [self._core_ratio_1_max, self._core_ratio_2_max]
             )
-            return res
 
-        bounds = Bounds(
-            [self._core_ratio_1_min, self._core_ratio_2_min], [self._core_ratio_1_max, self._core_ratio_2_max]
-        )
+            res = minimize(min_func, [self.core_ratio] * 2, bounds=bounds)
+            self._optimized_core_ratios = res.x
 
-        res = minimize(min_func, [self.core_ratio] * 2, bounds=bounds)
-        ratios = res.x
-        return ratios[0], ratios[1]
+        return self._optimized_core_ratios[0], self._optimized_core_ratios[1]
 
     @property
     def core_ratio_1(self):
