@@ -120,7 +120,7 @@ class SplineRound(DiskBase):
 
         spline_points_new = self.center + spline_d_0_org * u_0 + spline_d_1_org * u_1
 
-        print(p_0_u_adj, p_0, p_1_u, p_1, side_1, self.side_1, side_2, self.side_2)
+        print(p_0_u_adj, p_0, p_1_u, p_1, r_1, self.radius_1, r_2, self.radius_2)
         return spline_points_new
 
     def add_core_spline_edges(self) -> None:
@@ -507,6 +507,7 @@ class HalfSplineDisk(SplineRound, HalfDisk):
         """Method to convert a circular disk to the elliptical/oval shape defined"""
         r_1 = f.norm(corner_1_point - self.center) - self.side_1
         r_2 = f.norm(corner_2_point - self.center) - self.side_2
+        print("correct Disc", r_1, r_2)
 
         pos = self.positions
         # Core
