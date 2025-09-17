@@ -129,7 +129,6 @@ class SplineRound(DiskBase):
         sides = [self.side_1, self.side_2]
         radi = [self.radius_1, self.radius_2]
         for i, face in enumerate(self.core):
-            print(i, self.center)
             p_0 = face.point_array[(i + 1) % 4]  # Core point on radius 1
             p_1 = face.point_array[(i + 2) % 4]  # Core point on diagonal
             p_2 = face.point_array[(i + 3) % 4]  # Core point on radius 2
