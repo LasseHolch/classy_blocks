@@ -453,23 +453,27 @@ class QuarterSplineDisk(SplineRound, QuarterDisk):
         r_1 = f.norm(corner_1_point - self.center) - self.side_1
         r_2 = f.norm(corner_2_point - self.center) - self.side_2
 
+        # First correct corner 2 to ensure correct calculation of core ratios
+        pos = self.positions
+        pos[6] = corner_2_point
+        self.update(pos)
+
         pos = self.positions
         # Core
-        pos[1] = self.center + (self.side_1 + self.core_ratio * r_1) * self.u_1
+        pos[1] = self.center + (self.side_1 + self.core_ratio_1 * r_1) * self.u_1
         pos[2] = (
             self.center
-            + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio * r_1) * self.u_1
-            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio * r_2) * self.u_2
+            + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
+            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2) * self.u_2
         )
-        pos[3] = self.center + (self.side_2 + self.core_ratio * r_2) * self.u_2
+        pos[3] = self.center + (self.side_2 + self.core_ratio_2 * r_2) * self.u_2
 
         # Shell
         pos[5] = (
             self.center
-            + (self.side_1 + 2 ** (-1 / 2) * r_1) * self.u_1
-            + (self.side_2 + 2 ** (-1 / 2) * r_2) * self.u_2
+            + (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
+            + (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
         )
-        pos[6] = corner_2_point
 
         self.update(pos)
 
@@ -517,6 +521,11 @@ class HalfSplineDisk(SplineRound, HalfDisk):
         r_1 = f.norm(corner_1_point - self.center) - self.side_1
         r_2 = f.norm(corner_2_point - self.center) - self.side_2
 
+        # First correct corner 2 to ensure correct calculation of core ratios
+        pos = self.positions
+        pos[8] = corner_2_point
+        self.update(pos)
+
         pos = self.positions
         # Core
         pos[1] = self.center + (self.side_1 + self.core_ratio_1 * r_1) * self.u_1
@@ -539,7 +548,6 @@ class HalfSplineDisk(SplineRound, HalfDisk):
             + (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
             + (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
         )
-        pos[8] = corner_2_point
         pos[9] = (
             self.center
             - (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
@@ -591,57 +599,60 @@ class SplineDisk(SplineRound, FourCoreDisk):
         r_1 = f.norm(corner_1_point - self.center) - self.side_1
         r_2 = f.norm(corner_2_point - self.center) - self.side_2
 
+        # First correct corner 2 to ensure correct calculation of core ratios
+        pos = self.positions
+        pos[11] = corner_2_point
+        self.update(pos)
+
         pos = self.positions
         # Core
-        pos[1] = self.center + (self.side_1 + self.core_ratio * r_1) * self.u_1
+        pos[1] = self.center + (self.side_1 + self.core_ratio_1 * r_1) * self.u_1
         pos[2] = (
             self.center
-            + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio * r_1) * self.u_1
-            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio * r_2) * self.u_2
+            + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
+            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2) * self.u_2
         )
-        pos[3] = self.center + (self.side_2 + self.core_ratio * r_2) * self.u_2
+        pos[3] = self.center + (self.side_2 + self.core_ratio_2 * r_2) * self.u_2
         pos[4] = (
             self.center
-            - (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio * r_1) * self.u_1
-            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio * r_2) * self.u_2
+            - (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
+            + (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2) * self.u_2
         )
-        pos[5] = self.center - (self.side_1 + self.core_ratio * r_1) * self.u_1
+        pos[5] = self.center - (self.side_1 + self.core_ratio_1 * r_1) * self.u_1
         pos[6] = (
             self.center
-            - (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio * r_1) * self.u_1
-            - (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio * r_2) * self.u_2
+            - (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
+            - (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2) * self.u_2
         )
-        pos[7] = self.center - (self.side_2 + self.core_ratio * r_2) * self.u_2
+        pos[7] = self.center - (self.side_2 + self.core_ratio_2 * r_2) * self.u_2
         pos[8] = (
             self.center
-            + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio * r_1) * self.u_1
-            - (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio * r_2) * self.u_2
+            + (self.side_1 + 2 ** (-1 / 2) * self.diagonal_ratio_1 * r_1) * self.u_1
+            - (self.side_2 + 2 ** (-1 / 2) * self.diagonal_ratio_2 * r_2) * self.u_2
         )
 
         # Shell
-        pos[9] = corner_1_point
         pos[10] = (
             self.center
-            + (self.side_1 + 2 ** (-1 / 2) * r_1) * self.u_1
-            + (self.side_2 + 2 ** (-1 / 2) * r_2) * self.u_2
+            + (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
+            + (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
         )
-        pos[11] = corner_2_point
         pos[12] = (
             self.center
-            - (self.side_1 + 2 ** (-1 / 2) * r_1) * self.u_1
-            + (self.side_2 + 2 ** (-1 / 2) * r_2) * self.u_2
+            - (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
+            + (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
         )
         pos[13] = self.center - (self.side_1 + r_1) * self.u_1
         pos[14] = (
             self.center
-            - (self.side_1 + 2 ** (-1 / 2) * r_1) * self.u_1
-            - (self.side_2 + 2 ** (-1 / 2) * r_2) * self.u_2
+            - (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
+            - (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
         )
         pos[15] = self.center - (self.side_2 + r_2) * self.u_2
         pos[16] = (
             self.center
-            + (self.side_1 + 2 ** (-1 / 2) * r_1) * self.u_1
-            - (self.side_2 + 2 ** (-1 / 2) * r_2) * self.u_2
+            + (self.side_1 + np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_1) * self.u_1
+            - (self.side_2 + np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4) * r_2) * self.u_2
         )
 
         self.update(pos)
@@ -669,7 +680,8 @@ class QuarterSplineRing(QuarterSplineDisk):
         """
         With a normal in x direction corner 1 will be in the y direction and corner 2 the z direction.
         Note the vectors from the center to corner 1 and 2 should be perpendicular.
-        The ring is defined such it will fit around a QuaterSplineRound defined with the same center, corners and sides.
+        The ring is defined such it will fit around a QuarterSplineRound defined
+        with the same center, corners and sides.
         Args:
             center_point: Center of round shape
             corner_1_point: Radius for circular and elliptical shape
