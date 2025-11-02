@@ -9,6 +9,7 @@ import numpy as np
 import scipy.optimize
 
 from classy_blocks.base.exceptions import OptimizationError
+from classy_blocks.construct.flat.sketch import Sketch
 from classy_blocks.construct.flat.sketches.mapped import MappedSketch
 from classy_blocks.construct.operations.operation import Operation
 from classy_blocks.mesh import Mesh
@@ -209,6 +210,9 @@ class OptimizerBase(abc.ABC):
         for i in range(self.config.max_iterations):
             iter_record = self._optimize_iteration(i)
 
+            if iter_record.abs_improvement < 0:
+                # can happen during the relaxed iterations
+                continue
             if iter_record.abs_improvement < self.config.abs_tol:
                 orecord.termination = "abs"
                 break
@@ -260,15 +264,24 @@ class ShapeOptimizer(OptimizerBase):
 
 
 class SketchOptimizer(OptimizerBase):
-    def __init__(self, sketch: MappedSketch, report: bool = True):
+    def __init__(self, sketch: Sketch, report: bool = True, merge_tol: float = TOL):
         self.sketch = sketch
 
-        grid = QuadGrid(sketch.positions, sketch.indexes)
+        grid = QuadGrid.from_sketch(sketch, merge_tol=merge_tol)
 
         super().__init__(grid, report)
 
     def _backport(self):
-        self.sketch.update(self.grid.points)
+        if isinstance(self.sketch, MappedSketch):
+            self.sketch.update(self.grid.points)
+            return
+
+        # take faces and points from QuadGrid
+        for face_index, face in enumerate(self.sketch.faces):
+            point_indexes = self.grid.addressing[face_index]
+            for corner_index, point_index in enumerate(point_indexes):
+                point = self.grid.points[point_index]
+                face.points[corner_index].position = point
 
     def auto_optimize(
         self,

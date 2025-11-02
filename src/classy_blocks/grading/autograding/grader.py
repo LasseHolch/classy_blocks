@@ -24,7 +24,11 @@ class GraderBase:
         for chop in chops:
             wire.grading.add_chop(chop)
 
-        wire.copy_to_coincidents()
+        try:
+            wire.copy_to_coincidents()
+        except ValueError:  # TODO: replace with a custom exception
+            print(f"Problem with wire {wire}")
+            raise
 
     def check_at_wall(self, row: Row) -> tuple[bool, bool]:
         """Returns True if any block on given row has a wall patch
