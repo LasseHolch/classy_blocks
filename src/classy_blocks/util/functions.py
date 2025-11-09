@@ -261,7 +261,7 @@ def mirror_matrix(normal: VectorType):
     )
 
 
-def mirror(point: PointType, normal: VectorType, origin: PointType):
+def _mirror(point: PointType, normal: VectorType, origin: PointType):
     """Mirror a point around a plane, given by a normal and origin"""
     # brainlessly copied from https://gamemath.com/book/matrixtransforms.html
     point = np.asarray(point)
@@ -273,6 +273,50 @@ def mirror(point: PointType, normal: VectorType, origin: PointType):
     rotated += origin
 
     return rotated
+
+
+def _mirror(point, normal, origin):
+    point = np.array(point, dtype=float)
+    origin = np.array(origin, dtype=float)
+    normal = np.array(normal, dtype=float)
+    normal /= np.linalg.norm(normal)  # normalize
+
+    # vector from plane origin to point
+    v = point - origin
+    # signed distance from plane
+    dist = np.dot(v, normal)
+    # mirrored point
+    mirrored = point - 2 * dist * normal
+    return mirrored
+
+
+def mirror(points, normal, origin):
+    """
+    Mirror one or more 3D points over a plane defined by origin and normal.
+
+    Parameters
+    ----------
+    points : (N, 3) array_like
+        Points to mirror (N can be 1 for a single point).
+    origin : (3,) array_like
+        A point on the plane.
+    normal : (3,) array_like
+        Plane normal (need not be normalized).
+
+    Returns
+    -------
+    mirrored : (N, 3) ndarray
+        Mirrored points.
+    """
+    points = np.atleast_2d(points).astype(float)
+    origin = np.asarray(origin, dtype=float)
+    normal = np.asarray(normal, dtype=float)
+    normal /= np.linalg.norm(normal)
+
+    v = points - origin  # (N, 3)
+    dist = np.dot(v, normal)  # (N,)
+    mirrored = points - 2 * dist[:, np.newaxis] * normal
+    return mirrored
 
 
 def point_to_plane_distance(origin: PointType, normal: VectorType, point: PointType) -> float:

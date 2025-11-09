@@ -47,7 +47,7 @@ class Series(ElementBase):
 
         return self
 
-    def mirror(self, normal: VectorType, origin: Optional[PointType] = None):
+    def _mirror(self, normal: VectorType, origin: Optional[PointType] = None):
         if origin is None:
             origin = f.vector(0, 0, 0)
 
