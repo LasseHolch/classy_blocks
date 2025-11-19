@@ -1,10 +1,15 @@
 import warnings
 
+import numpy as np
+
 from classy_blocks.base.element import ElementBase
 from classy_blocks.base.exceptions import EdgeCreationError
 from classy_blocks.cbtyping import EdgeKindType, NPPointListType, PointListType, PointType, ProjectToType, VectorType
 from classy_blocks.construct.curves.curve import CurveBase
 from classy_blocks.construct.curves.discrete import DiscreteCurve
+
+# from classy_blocks.items.edges.arcs.angle import arc_from_theta
+from classy_blocks.construct.curves.interpolated import OpenFOAMSplineCurve
 from classy_blocks.construct.point import Point, Vector
 from classy_blocks.util import functions as f
 
@@ -34,6 +39,18 @@ class Line(EdgeData):
 
     kind = "line"
 
+    def to_spline(self, start_point: PointType, end_point: PointType, n_spline_points: int):
+        """Returns a Spline edge with n_spline_points distributed on a straight line from start_point to end_point"""
+        start_point = start_point.position if isinstance(start_point, Point) else np.asarray(start_point, dtype=float)
+        end_point = end_point.position if isinstance(end_point, Point) else np.asarray(end_point, dtype=float)
+        vec = end_point - start_point
+
+        points = start_point + np.linspace(0, 1, n_spline_points + 1, endpoint=False)[1:].reshape(-1, 1) * vec
+        if f.norm(points[0] - start_point) > f.norm(points[0] - end_point):
+            print("lllll")
+            points = points[::-1]
+        return Spline(points)
+
 
 class Arc(EdgeData):
     """Parameters for an arc edge: classic OpenFOAM circular arc
@@ -43,6 +60,41 @@ class Arc(EdgeData):
 
     def __init__(self, arc_point: PointType):
         self.point = Point(arc_point)
+
+    def to_spline(self, start_point: PointType, end_point: PointType, n_spline_points: int):
+        """Returns a Spline edge with n_spline_points distributed on circular arc from start_point to end_point"""
+        start_point = start_point.position if isinstance(start_point, Point) else np.asarray(start_point, dtype=float)
+        arc_point = self.point.position
+        end_point = end_point.position if isinstance(end_point, Point) else np.asarray(end_point, dtype=float)
+
+        a = f.norm(end_point - arc_point)
+        b = f.norm(end_point - start_point)
+        c = f.norm(arc_point - start_point)
+        s = (a + b + c) / 2
+
+        b1 = a**2 * (b**2 + c**2 - a**2)
+        b2 = b**2 * (a**2 + c**2 - b**2)
+        b3 = c**2 * (a**2 + b**2 - c**2)
+
+        center = np.column_stack((start_point, arc_point, end_point)).dot(np.hstack((b1, b2, b3))) / (b1 + b2 + b3)
+        r = a * b * c / 4 / np.sqrt(s * (s - a) * (s - b) * (s - c))
+        angle = np.arccos(
+            np.dot(start_point - center, end_point - center)
+            / (f.norm(start_point - center) * f.norm(end_point - center))
+        )
+        u_0 = f.unit_vector(start_point - center)
+        u_1 = f.unit_vector(end_point - center - np.dot(end_point - center, u_0) * u_0)
+
+        angles = np.linspace(0, angle, n_spline_points + 1, endpoint=False)[1:].reshape((-1, 1))
+        points = center + r * (np.cos(angles) * u_0 + np.sin(angles) * u_1)
+
+        # Check rotation is in the right direction
+        if f.norm(points[0] - arc_point) > f.norm(start_point - arc_point):
+            angle = 2 * np.pi - angle
+            angles = np.linspace(0, angle, n_spline_points + 1, endpoint=False)[1:].reshape((-1, 1))
+            points = center + r * (np.cos(angles) * u_0 + np.sin(angles) * u_1)
+
+        return Spline(points)
 
     @property
     def parts(self):
@@ -66,6 +118,17 @@ class Origin(EdgeData):
     def __init__(self, origin: PointType, flatness: float = 1):
         self.origin = Point(origin)
         self.flatness = flatness
+
+    def to_spline(self, start_point: PointType, end_point: PointType, n_spline_points: int):
+        from classy_blocks.items.edges.arcs.origin import arc_from_origin
+
+        """Returns a Spline edge with n_spline_points distributed on circular arc from start_point to end_point."""
+        start_point = start_point.position if isinstance(start_point, Point) else np.asarray(start_point, dtype=float)
+        end_point = end_point.position if isinstance(end_point, Point) else np.asarray(end_point, dtype=float)
+        center = self.origin.position
+        arc_point = arc_from_origin(start_point, end_point, center, r_multiplier=self.flatness)
+
+        return Arc(arc_point).to_spline(start_point, end_point, n_spline_points)
 
     @property
     def parts(self):
@@ -94,6 +157,16 @@ class Angle(EdgeData):
 
     def scale(self, ratio, origin=None):
         """Axis is not to be scaled"""
+
+    def to_spline(self, start_point: PointType, end_point: PointType, n_spline_points: int):
+        """Returns a Spline edge with n_spline_points distributed on circular arc from start_point to end_point."""
+        from classy_blocks.items.edges.arcs.angle import arc_from_theta
+
+        start_point = start_point.position if isinstance(start_point, Point) else np.asarray(start_point, dtype=float)
+        end_point = end_point.position if isinstance(end_point, Point) else np.asarray(end_point, dtype=float)
+        arc_point = arc_from_theta(start_point, end_point, self.angle, self.axis)
+
+        return Arc(arc_point).to_spline(start_point, end_point, n_spline_points)
 
     @property
     def parts(self):
@@ -171,6 +244,22 @@ class Spline(OnCurve):
     def __init__(self, points: PointListType):
         curve = DiscreteCurve(points)
         super().__init__(curve, n_points=len(points), representation=self.kind)
+
+    def to_spline(self, start_point: PointType, end_point: PointType, n_spline_points: int):
+        """Returns a Spline edge with n_spline_points distributed on the spline from start_point to end_point."""
+        if n_spline_points == 0:
+            return self
+
+        of_spline = OpenFOAMSplineCurve(
+            np.concatenate(
+                [start_point.position.reshape((-1, 3)), self.curve.series.points, end_point.position.reshape((-1, 3))]
+            )
+        )
+        points = np.asarray(
+            [of_spline.get_point(t) for t in np.linspace(0, 1, n_spline_points + 1, endpoint=False)[1:]]
+        ).reshape((-1, 3))
+
+        return Spline(points)
 
     @property
     def parts(self):

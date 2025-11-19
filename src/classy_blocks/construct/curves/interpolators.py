@@ -75,3 +75,45 @@ class SplineInterpolator(InterpolatorBase):
         spline = scipy.interpolate.make_interp_spline(self.params, self.points.points, check_finite=False)
 
         return lambda t: spline(t, extrapolate=self.extrapolate)
+
+
+class OpenFoamSplineInterpolator(InterpolatorBase):
+    """Implementation of the OpenFOAM spline.
+    https://www.openfoam.com/documentation/guides/latest/api/classFoam_1_1BSpline.html"""
+
+    equalize = True
+
+    def _function(self, t: float | np.ndarray):
+        if isinstance(t, float):
+            t = [t]
+        t = np.asarray(t).flatten()
+        i = (self.params.reshape((-1, 1)) >= t).argmax(axis=0) - 1
+        n_segments = len(self.points.points) - 1
+
+        local_t = (t - self.params[i]) / (self.params[i + 1] - self.params[i])
+        p0 = np.asarray(self.points.points[i])
+        p1 = np.asarray(self.points.points[i + 1])
+
+        e0 = np.zeros((len(i), 3))
+        e1 = np.zeros((len(i), 3))
+
+        e0[i == 0] = 2 * p0[i == 0] - p1[i == 0]
+        e0[i != 0] = self.points.points[i[i != 0] - 1]
+
+        e1[i + 1 == n_segments] = 2 * p1[i + 1 == n_segments] - p0[i + 1 == n_segments]
+        e1[i + 1 != n_segments] = self.points.points[i[i + 1 != n_segments] + 2]
+
+        res = (
+            1
+            / 6
+            * (
+                (e0 + 4 * p0 + p1)
+                + local_t
+                * ((-3 * e0 + 3 * p1) + local_t * ((3 * e0 - 6 * p0 + 3 * p1) + local_t * (-e0 + 3 * p0 - 3 * p1 + e1)))
+            )
+        )
+
+        return res
+
+    def _get_function(self):
+        return lambda t: self._function(t)

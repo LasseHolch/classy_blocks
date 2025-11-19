@@ -7,7 +7,7 @@ import numpy as np
 from classy_blocks.base.element import ElementBase
 from classy_blocks.base.exceptions import FaceCreationError
 from classy_blocks.cbtyping import NPPointListType, NPPointType, NPVectorType, PointListType, PointType, ProjectToType
-from classy_blocks.construct.edges import EdgeData, Line, Project
+from classy_blocks.construct.edges import EdgeData, Line, Project, Spline
 from classy_blocks.construct.point import Point
 from classy_blocks.util import constants
 from classy_blocks.util import functions as f
@@ -113,6 +113,36 @@ class Face(ElementBase):
     def copy(self) -> "Face":
         """Returns a copy of this Face"""
         return copy.deepcopy(self)
+
+    def edge_to_spline(self, corner: int, n_spline_points: int):
+        if corner > 3:
+            raise FaceCreationError("Provide a corner index between 0 and 3", f"Given corner index: {corner}")
+
+        if corner == -1:
+            for c in range(4):
+                self.edge_to_spline(c, n_spline_points)
+        else:
+            e = Line() if self.edges[corner] is None else self.edges[corner]
+            self.add_edge(
+                corner,
+                e.to_spline(
+                    self.points[min(corner, (corner + 1) % 4)],
+                    self.points[max(corner, (corner + 1) % 4)],
+                    n_spline_points,
+                ),
+            )
+
+    def project_edges_to_stl_along_vector(self, stl_mesh, vec: NPVectorType, n_spline_points: int):
+        # convert edges to splines
+        self.edge_to_spline(-1, n_spline_points)
+
+        # Project edges to stl
+        for i, edge in enumerate(self.edges):
+            points = edge.curve.series.points
+            self.add_edge(i, Spline(f.project_points_to_stl_along_vector(points, stl_mesh, vec)))
+
+        # Project points to stl
+        self.update(f.project_points_to_stl_along_vector(self.point_array, stl_mesh, vec))
 
     @property
     def point_array(self) -> NPPointListType:

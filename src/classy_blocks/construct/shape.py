@@ -103,6 +103,11 @@ class LoftedShape(Shape, abc.ABC, Generic[SketchT]):
         """Analogous to Sketch's grid but corresponsing operations are returned"""
         return self.lofts
 
+    @property
+    def sketches(self) -> list[SketchT]:
+        """Return list of sketches. sketch_1, sketch_mid, sketch_2."""
+        return [self.sketch_1, *self.sketch_mid + self.sketch_2]
+
     def chop(self, axis: DirectionType, **kwargs) -> None:
         """Chops operations along given axis.
         Only axis 0 and 1 are allowed as defined in sketch_1"""

@@ -7,6 +7,7 @@ import numpy as np
 import scipy
 import scipy.linalg
 from numba import jit  # type: ignore
+from stl.mesh import Mesh as StlMesh
 
 from classy_blocks.cbtyping import NPPointListType, NPPointType, NPVectorType, PointListType, PointType, VectorType
 from classy_blocks.util import constants
@@ -315,3 +316,67 @@ def polyline_length(points: NPPointListType) -> float:
 def flatten_2d_list(twodim: list[list]) -> list:
     """Flattens a list of lists to a 1d-list"""
     return list(chain.from_iterable(twodim))
+
+
+def project_points_to_stl_along_vector(
+    points: NPPointListType, stl_mesh: StlMesh, direction: VectorType
+) -> NPPointListType:
+    intersect_points = np.zeros(points.shape)
+    eps = 0.000001
+
+    edge1 = stl_mesh.v1 - stl_mesh.v0
+    edge2 = stl_mesh.v2 - stl_mesh.v0
+
+    for i, p in enumerate(points):
+        all_t = np.zeros(len(edge1))
+        intersected = np.full((len(edge1)), True)
+
+        pvec = np.cross(direction, edge2)
+
+        det = np.sum(edge1 * pvec, axis=1)
+
+        non_intersecting_original_indices = np.absolute(det) < eps
+
+        all_t[non_intersecting_original_indices] = np.nan
+        intersected[non_intersecting_original_indices] = False
+
+        inv_det = 1.0 / det
+
+        tvec = p - stl_mesh.v0
+
+        u = np.sum(tvec * pvec, axis=1) * inv_det
+
+        non_intersecting_original_indices = (u < 0.0) + (u > 1.0)
+        all_t[non_intersecting_original_indices] = np.nan
+        intersected[non_intersecting_original_indices] = False
+
+        qvec = np.cross(tvec, edge1)
+
+        v = np.sum(direction * qvec, axis=1) * inv_det
+
+        non_intersecting_original_indices = (v < 0.0) + (u + v > 1.0)
+
+        all_t[non_intersecting_original_indices] = np.nan
+        intersected[non_intersecting_original_indices] = False
+
+        t = (
+            np.sum(
+                edge2 * qvec,
+                axis=1,
+            )
+            * inv_det
+        )
+
+        non_intersecting_original_indices = t < eps
+        all_t[non_intersecting_original_indices] = np.nan
+        intersected[non_intersecting_original_indices] = False
+
+        intersecting_original_indices = np.invert(non_intersecting_original_indices)
+        all_t[intersecting_original_indices] = t[intersecting_original_indices]
+
+        if any(intersected):
+            intersect_points[i] = p + min(all_t[intersected]) * direction
+        else:
+            intersect_points[i] = p
+
+    return intersect_points

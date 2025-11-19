@@ -5,7 +5,12 @@ import numpy as np
 
 from classy_blocks.cbtyping import PointListType
 from classy_blocks.construct.curves.curve import FunctionCurveBase
-from classy_blocks.construct.curves.interpolators import InterpolatorBase, LinearInterpolator, SplineInterpolator
+from classy_blocks.construct.curves.interpolators import (
+    InterpolatorBase,
+    LinearInterpolator,
+    OpenFoamSplineInterpolator,
+    SplineInterpolator,
+)
 from classy_blocks.construct.series import Series
 from classy_blocks.util import functions as f
 
@@ -67,3 +72,7 @@ class LinearInterpolatedCurve(InterpolatedCurveBase):
 
 class SplineInterpolatedCurve(InterpolatedCurveBase):
     _interpolator = SplineInterpolator
+
+
+class OpenFOAMSplineCurve(InterpolatedCurveBase):
+    _interpolator = OpenFoamSplineInterpolator

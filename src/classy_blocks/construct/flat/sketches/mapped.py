@@ -107,3 +107,11 @@ class MappedSketch(Sketch):
                 merge_two_sketches(self, o)
         else:
             merge_two_sketches(self, other)
+
+    @classmethod
+    def from_faces(cls, face_list: list[Face]):
+        positions = np.unique(np.concatenate([face.point_array for face in face_list]), axis=0)
+        quads = [
+            [np.arange(len(positions))[(positions == p).all(axis=1)][0] for p in face.point_array] for face in face_list
+        ]
+        return cls(positions, quads)
