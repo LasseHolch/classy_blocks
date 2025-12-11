@@ -235,7 +235,7 @@ def arc_mid(center: NPPointType, point_1: NPPointType, point_2: NPPointType) -> 
     return divide_arc(center, point_1, point_2, 1)[0]
 
 
-def mirror(points: PointType | PointListType, normal: VectorType, origin: PointType):
+def mirror(points: Union[PointType, PointListType], normal: VectorType, origin: PointType):
     """
     Mirrors one or more 3D points over a plane defined by origin and normal.
 
