@@ -47,17 +47,11 @@ class Series(ElementBase):
 
         return self
 
-    def _mirror(self, normal: VectorType, origin: Optional[PointType] = None):
+    def mirror(self, normal: VectorType, origin: Optional[PointType] = None):
         if origin is None:
             origin = f.vector(0, 0, 0)
 
-        normal = np.array(normal)
-        matrix = f.mirror_matrix(normal)
-
-        self.points -= origin
-
-        mirrored_points = np.dot(self.points - origin, matrix.T)
-        self.points = mirrored_points + origin
+        self.points = f.mirror(self.points, normal, origin)
 
         return self
 
