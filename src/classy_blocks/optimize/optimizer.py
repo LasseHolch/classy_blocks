@@ -2,10 +2,14 @@ import abc
 import copy
 import dataclasses
 import time
+from dataclasses import field
+from typing import Optional
 
 import numpy as np
 import scipy.optimize
 
+from classy_blocks.base.exceptions import OptimizationError
+from classy_blocks.construct.flat.sketch import Sketch
 from classy_blocks.construct.flat.sketches.mapped import MappedSketch
 from classy_blocks.construct.operations.operation import Operation
 from classy_blocks.mesh import Mesh
@@ -47,6 +51,10 @@ class OptimizerConfig:
     # convergence tolerance for a single joint
     # as passed to scipy.optimize.minimize
     clamp_tol: float = 1e-3
+    # additional options passed to Scipy's minimize method,
+    # depending on chosen algotirhm; see documentation of scipy.optimize.minimize
+    # and specifically the chosen algorithm
+    options: dict = field(default_factory=dict)
 
 
 class OptimizerBase(abc.ABC):
@@ -72,42 +80,68 @@ class OptimizerBase(abc.ABC):
     def add_link(self, link: LinkBase) -> None:
         self.grid.add_link(link)
 
+    def _get_sensitivity(self, clamp: ClampBase):
+        """Returns maximum partial derivative at current params"""
+        junction = self.grid.get_junction_from_clamp(clamp)
+        initial_position = copy.copy(junction.point)
+
+        def fquality(clamp, junction, params):
+            try:
+                clamp.update_params(params)
+                quality = self.grid.update(junction.index, clamp.position)
+                self.grid.update(junction.index, initial_position)
+
+                return quality
+            except Exception as e:
+                print(e)
+                return 0
+
+        sensitivities = scipy.optimize.approx_fprime(clamp.params, lambda p: fquality(clamp, junction, p), epsilon=TOL)
+
+        return np.linalg.norm(sensitivities)
+
     def _optimize_clamp(self, clamp: ClampBase, relaxation_factor: float) -> ClampRecord:
         """Move clamp.vertex so that quality at junction is improved;
         rollback changes if grid quality decreased after optimization"""
         junction = self.grid.get_junction_from_clamp(clamp)
-        crecord = ClampRecord(junction.index, self.grid.quality, junction.quality)
+        crecord = ClampRecord(junction.index, self.grid.quality)
         self.reporter.clamp_start(crecord)
+        initial_position = copy.copy(junction.point)
         initial_params = copy.copy(clamp.params)
 
         def fquality(params):
             clamp.update_params(params)
-            quality = self.grid.update(junction.index, clamp.position)
-            return quality
+            return self.grid.update(junction.index, clamp.position)
 
         try:
             result = scipy.optimize.minimize(
-                fquality, clamp.params, bounds=clamp.bounds, method=self.config.method, tol=self.config.clamp_tol
+                fquality,
+                clamp.params,
+                bounds=clamp.bounds,
+                method=self.config.method,
+                tol=self.config.clamp_tol,
+                options=self.config.options,
             )
             if not result.success:
-                raise ValueError(result.message)
+                raise OptimizationError(result.message)
 
             # relax and update
             for i, param in enumerate(result.x):
                 clamp.params[i] = initial_params[i] + relaxation_factor * (param - initial_params[i])
+            fquality(clamp.params)
 
-            crecord.grid_final = fquality(clamp.params)
+            # always check grid quality, not clamp's
+            crecord.grid_final = self.grid.quality
 
-            if np.isnan(crecord.improvement) or crecord.improvement <= 0:
-                raise ValueError("No improvement")
-        except ValueError as e:
+            if not crecord.improvement > 0:
+                raise OptimizationError("No improvement")
+        except OptimizationError as e:
             # roll back to the initial state
-            fquality(initial_params)
+            self.grid.update(junction.index, initial_position)
             crecord.rolled_back = True
             crecord.error_message = str(e)
+            crecord.grid_final = self.grid.quality
 
-        crecord.junction_final = junction.quality
-        crecord.grid_final = self.grid.quality
         self.reporter.clamp_end(crecord)
 
         return crecord
@@ -117,7 +151,8 @@ class OptimizerBase(abc.ABC):
         irecord = IterationRecord(iteration_no, self.grid.quality, rlf)
         self.reporter.iteration_start(iteration_no, rlf)
 
-        for clamp in self.grid.clamps:
+        clamps = sorted(self.grid.clamps, key=lambda c: self._get_sensitivity(c), reverse=True)
+        for clamp in clamps:
             self._optimize_clamp(clamp, rlf)
 
         irecord.grid_final = self.grid.quality
@@ -149,9 +184,9 @@ class OptimizerBase(abc.ABC):
 
     def optimize(
         self,
-        max_iterations: int = 20,
-        tolerance: float = 0.1,
-        method: MinimizationMethodType = "SLSQP",
+        max_iterations: Optional[int] = None,
+        tolerance: Optional[float] = None,
+        method: Optional[MinimizationMethodType] = None,
     ) -> bool:
         """Move vertices as defined and restrained with Clamps
         so that better mesh quality is obtained.
@@ -163,14 +198,21 @@ class OptimizerBase(abc.ABC):
         for fine tuning, modify optimizer.config attribute.
 
         Returns True is optimization was successful (tolerance reached)"""
-        self.config.max_iterations = max_iterations
-        self.config.rel_tol = tolerance
-        self.config.method = method
+        if max_iterations is not None:
+            self.config.max_iterations = max_iterations
+        if tolerance is not None:
+            self.config.rel_tol = tolerance
+        if method is not None:
+            self.config.method = method
+
         orecord = OptimizationRecord(time.time(), self.grid.quality)  # TODO: cache repeating quality queries
 
-        for i in range(max_iterations):
+        for i in range(self.config.max_iterations):
             iter_record = self._optimize_iteration(i)
 
+            if iter_record.abs_improvement < 0:
+                # can happen during the relaxed iterations
+                continue
             if iter_record.abs_improvement < self.config.abs_tol:
                 orecord.termination = "abs"
                 break
@@ -222,18 +264,30 @@ class ShapeOptimizer(OptimizerBase):
 
 
 class SketchOptimizer(OptimizerBase):
-    def __init__(self, sketch: MappedSketch, report: bool = True):
+    def __init__(self, sketch: Sketch, report: bool = True, merge_tol: float = TOL):
         self.sketch = sketch
 
-        grid = QuadGrid(sketch.positions, sketch.indexes)
+        grid = QuadGrid.from_sketch(sketch, merge_tol=merge_tol)
 
         super().__init__(grid, report)
 
     def _backport(self):
-        self.sketch.update(self.grid.points)
+        if isinstance(self.sketch, MappedSketch):
+            self.sketch.update(self.grid.points)
+            return
+
+        # take faces and points from QuadGrid
+        for face_index, face in enumerate(self.sketch.faces):
+            point_indexes = self.grid.addressing[face_index]
+            for corner_index, point_index in enumerate(point_indexes):
+                point = self.grid.points[point_index]
+                face.points[corner_index].position = point
 
     def auto_optimize(
-        self, max_iterations: int = 20, tolerance: float = 0.1, method: MinimizationMethodType = "SLSQP"
+        self,
+        max_iterations: Optional[int] = None,
+        tolerance: Optional[float] = None,
+        method: Optional[MinimizationMethodType] = None,
     ) -> bool:
         """Adds a PlaneClamp to all non-boundary points and optimize the sketch.
         To include boundary points (those that can be moved along a line or a curve),

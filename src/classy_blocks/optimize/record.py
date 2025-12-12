@@ -1,7 +1,7 @@
 import dataclasses
 from typing import Literal
 
-MinimizationMethodType = Literal["SLSQP", "L-BFGS-B", "Nelder-Mead", "Powell"]
+MinimizationMethodType = Literal["SLSQP", "L-BFGS-B", "Nelder-Mead", "Powell", "trust-constr"]
 
 TerminationReason = Literal["running", "abs", "rel", "limit"]
 
@@ -43,10 +43,7 @@ class IterationRecord:
 class ClampRecord:
     vertex_index: int
     # clamp quality is taken from fquality in optimize_clamp();
-    # fquality from optimize_clamp() decides whether it's grid or junction quality
     grid_initial: float
-    junction_initial: float
-    junction_final: float = 0
     grid_final: float = 0
     rolled_back: bool = False
     error_message: str = ""

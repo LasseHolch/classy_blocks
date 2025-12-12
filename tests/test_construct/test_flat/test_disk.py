@@ -4,6 +4,7 @@ from unittest.mock import patch
 import numpy as np
 from parameterized import parameterized
 
+from classy_blocks.construct.edges import Origin
 from classy_blocks.construct.flat.sketches.disk import HalfDisk, OneCoreDisk, Oval, QuarterDisk, WrappedDisk
 from classy_blocks.construct.shape import ExtrudedShape
 from classy_blocks.construct.shapes.sphere import get_named_points
@@ -114,6 +115,16 @@ class DisksTests(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(disk.origo, [0, 0, 0])
 
+    def test_one_core__disk_edges(self):
+        disk = OneCoreDisk([0, 0, 0], [2, 0, 0], [0, 0, 1])
+        disk.translate([1, 1, 1])
+
+        edge = disk.faces[1].edges[1]
+        if not isinstance(edge, Origin):
+            raise AssertionError("Wrong edge type!")
+
+        np.testing.assert_almost_equal(edge.origin.position, [1, 1, 1])
+
     def test_half_disk(self):
         disk = HalfDisk([0, 0, 0], [1, 0, 0], [0, 0, 1])
 
@@ -126,6 +137,16 @@ class DisksTests(unittest.TestCase):
         self.assertEqual(len(disk.grid[0]), 1)
         self.assertEqual(len(disk.grid[1]), 4)
         self.assertEqual(len(disk.grid[2]), 4)
+
+    def test_wrapped_disk_edges(self):
+        disk = WrappedDisk([0, 0, 0], [2, 0, 0], 1, [0, 0, 1])
+        disk.translate([1, 1, 1])
+
+        edge = disk.faces[1].edges[1]
+        if not isinstance(edge, Origin):
+            raise AssertionError("Wrong edge type!")
+
+        np.testing.assert_almost_equal(edge.origin.position, [1, 1, 1])
 
 
 class OvalTests(unittest.TestCase):

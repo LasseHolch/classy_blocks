@@ -5,9 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 1.9.1
+## [1.9.6]
+
+### Added
+
+- Convenience methods:
+  - `Curve.get_closest_point()`
+  - A new VTK writer for sketches: `classy_blocks.write.vtk.sketch_to_vtk()`, useful for debugging sketches alone
+  - Make `SketchOptimizer` work on all sketches, not just `cb.MappedSketch`
 
 ### Changed
+
+- Bugfix: mirror a point over an arbitrary plane; also now supports mirroring a point array
+- Bugfix: when finding points to connect clamps to junctions before optimization, do not call transform() on clamps or it will move them, making the optimizer unable to find actual junctions
+- Bugfix: ignore optimization iterations with zero or negative improvement
+
+## [1.9.5]
+
+### Added
+
+- A WrappedDisk example
+
+### Changed
+
+- Bugfix: inner edges on OneCoreDisk
+- Bugfix: inner edges on WrappedDisk
+- Bugfix: WrappedDisk chopping instructions
+
+## [1.9.4]
+
+### Added
+
+- Reintroduce sorting of vertices according to their influence on mesh quality prior to optimization (a.k.a. sensitivity)
+
+### Changed
+
+- Bugfix: rollback on badly initialized clamps
+- Favour non-ortho/aspect during optimization (produces better meshes)
+
+## [1.9.3]
+
+### Added
+
+- `trust-constr` optimization algorithm
+- pass arbitrary options to `scipy.optimize.minimize`
+
+### Changed
+
+- Bugfix: always use grid quality when checking for rollback
+
+## [1.9.2]
+
+- Bugfix: mixed grid and junction qualities
+
+## [1.9.1]
 
 - Bugfix: multiple projections to the same surface
 
@@ -15,7 +66,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Mapper class (not exposed as a public API) and replaced with lookup classes
 
-## 1.9.0
+## [1.9.0]
 
 ### Added
 

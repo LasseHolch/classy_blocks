@@ -217,6 +217,7 @@ class OneCoreDisk(DiskBase):
 
         # correct origo_point as it is not the same as with FourCoreDisk-based sketches
         self.origo_point = Point(center_point)
+        self.add_edges()
 
     @property
     def center(self):
@@ -338,8 +339,8 @@ class WrappedDisk(DiskBase):
     making the sketch a square"""
 
     chops: ClassVar = [
-        [6],
-        [1, 2],
+        [1, 5],
+        [1, 2, 3, 4],
     ]
 
     def __init__(self, center_point: PointType, corner_point: PointType, radius: float, normal: VectorType):
@@ -371,6 +372,7 @@ class WrappedDisk(DiskBase):
 
         super().__init__([*square_points, *arc_points, *outer_points], quad_map)
         self.origo_point = Point(center_point)
+        self.add_edges()
 
     @property
     def grid(self):
@@ -378,11 +380,11 @@ class WrappedDisk(DiskBase):
 
     def add_edges(self):
         for face in self.grid[1]:
-            face.add_edge(1, Origin(self.origo))
+            face.add_edge(1, Origin(self.center))
 
     @property
     def center(self):
-        return self.faces[0].center
+        return self.origo_point.position
 
 
 class Oval(DiskBase):
