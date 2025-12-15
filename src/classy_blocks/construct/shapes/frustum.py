@@ -5,7 +5,7 @@ import numpy as np
 from classy_blocks.base import transforms as tr
 from classy_blocks.base.exceptions import FrustumCreationError
 from classy_blocks.cbtyping import PointType
-from classy_blocks.construct.flat.sketches.disk import Disk
+from classy_blocks.construct.flat.sketches.disk import Disk, HalfDisk
 from classy_blocks.construct.shapes.round import RoundSolidShape
 from classy_blocks.util import functions as f
 from classy_blocks.util.constants import TOL
@@ -86,7 +86,7 @@ class Frustum(RoundSolidShape):
 
 
 class SemiFrustum(Frustum):
-    sketch_class = Disk
+    sketch_class = HalfDisk
 
     def set_symmetry_patch(self, name: str) -> None:
         self.shell[0].set_patch("front", name)
