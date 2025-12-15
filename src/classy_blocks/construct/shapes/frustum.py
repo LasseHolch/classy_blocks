@@ -85,7 +85,7 @@ class Frustum(RoundSolidShape):
         return cls(sketch.center, axis_point_2, sketch.radius_point, radius_2, radius_mid)
 
 
-class SemiFrustrum(Frustum):
+class SemiFrustum(Frustum):
     sketch_class = Disk
 
     def set_symmetry_patch(self, name: str) -> None:
