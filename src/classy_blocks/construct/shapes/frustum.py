@@ -83,3 +83,13 @@ class Frustum(RoundSolidShape):
         axis_point_2 = sketch.center + f.unit_vector(sketch.normal) * length
 
         return cls(sketch.center, axis_point_2, sketch.radius_point, radius_2, radius_mid)
+
+
+class SemiFrustrum(Frustum):
+    sketch_class = Disk
+
+    def set_symmetry_patch(self, name: str) -> None:
+        self.shell[0].set_patch("front", name)
+        self.shell[3].set_patch("back", name)
+        self.core[0].set_patch("front", name)
+        self.core[1].set_patch("front", name)
