@@ -44,6 +44,32 @@ class SemiCylinder(RoundSolidShape):
         self.core[0].set_patch("front", name)
         self.core[1].set_patch("front", name)
 
+    @classmethod
+    def chain(cls, source: RoundSolidShape, length: float, start_face: bool = False) -> "SemiCylinder":
+        """Creates a new Cylinder on start or end face of a round Shape (Elbow, Frustum, Cylinder);
+        Use length > 0 to extrude 'forward' from source's end face;
+        Use length > 0 and `start_face=True` to extrude 'backward' from source's start face"""
+        if length < 0:
+            raise CylinderCreationError(
+                "`chain()` operation failed: use a positive length and `start_face=True` to chain 'backwards'",
+                f"Given length: {length}, `start_face={start_face}`",
+            )
+
+        if start_face:
+            sketch = source.sketch_1
+            length = -length
+            radius_point_1 = f.rotate(sketch.radius_point, np.pi, sketch.normal, sketch.center)
+        else:
+            sketch = source.sketch_2
+            radius_point_1 = sketch.radius_point
+
+        axis_point_1 = sketch.center
+        normal = sketch.normal
+
+        axis_point_2 = axis_point_1 + f.unit_vector(normal) * length
+
+        return cls(axis_point_1, axis_point_2, radius_point_1)
+
 
 class QuarterCylinder(RoundSolidShape):
     """Quarter of a cylinder; it is constructed from
