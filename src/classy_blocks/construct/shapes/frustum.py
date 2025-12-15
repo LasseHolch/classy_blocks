@@ -116,7 +116,7 @@ class SemiFrustum(Frustum):
         if start_face:
             sketch = source.sketch_1
             length = -length
-            radius_point = sketch.radius_point.rotate(np.pi, sketch.normal, sketch.center)
+            radius_point = f.rotate(sketch.radius_point, np.pi, sketch.normal, sketch.center)
             print(sketch.radius_point, radius_point)
         else:
             sketch = source.sketch_2
