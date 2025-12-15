@@ -102,7 +102,7 @@ class SemiFrustum(Frustum):
         radius_2: float,
         start_face: bool = False,
         radius_mid: Optional[float] = None,
-    ) -> "Frustum":
+    ) -> "SemiFrustum":
         """Chain this Frustum to an existing Shape;
         Use length > 0 to begin on source's end face;
         Use length > 0 and `start_face=True` to begin on source's start face and go backwards
@@ -114,11 +114,14 @@ class SemiFrustum(Frustum):
             )
 
         if start_face:
-            sketch = source.sketch_1.rotate(np.pi, source.sketch_1.normal, source.sketch_1.center)
+            sketch = source.sketch_1
             length = -length
+            radius_point = sketch.radius_point.rotate(np.pi, sketch.normal, sketch.center)
+            print(sketch.radius_point, radius_point)
         else:
             sketch = source.sketch_2
+            radius_point = sketch.radius_point
 
         axis_point_2 = sketch.center + f.unit_vector(sketch.normal) * length
 
-        return cls(sketch.center, axis_point_2, sketch.radius_point, radius_2, radius_mid)
+        return cls(sketch.center, axis_point_2, radius_point, radius_2, radius_mid)
