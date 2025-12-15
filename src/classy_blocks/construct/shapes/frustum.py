@@ -93,3 +93,32 @@ class SemiFrustum(Frustum):
         self.shell[3].set_patch("back", name)
         self.core[0].set_patch("front", name)
         self.core[1].set_patch("front", name)
+
+    @classmethod
+    def chain(
+        cls,
+        source: RoundSolidShape,
+        length: float,
+        radius_2: float,
+        start_face: bool = False,
+        radius_mid: Optional[float] = None,
+    ) -> "Frustum":
+        """Chain this Frustum to an existing Shape;
+        Use length > 0 to begin on source's end face;
+        Use length > 0 and `start_face=True` to begin on source's start face and go backwards
+        """
+        if length < 0:
+            raise FrustumCreationError(
+                "`chain()` operation failed: use a positive length and `start_face=True` to chain 'backwards'",
+                f"Given length: {length}, `start_face={start_face}`",
+            )
+
+        if start_face:
+            sketch = source.sketch_1.rotate(np.pi, source.sketch_1.normal, source.sketch_1.center)
+            length = -length
+        else:
+            sketch = source.sketch_2
+
+        axis_point_2 = sketch.center + f.unit_vector(sketch.normal) * length
+
+        return cls(sketch.center, axis_point_2, sketch.radius_point, radius_2, radius_mid)
