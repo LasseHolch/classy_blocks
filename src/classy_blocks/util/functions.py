@@ -7,7 +7,6 @@ import numpy as np
 import scipy
 import scipy.linalg
 from numba import jit  # type: ignore
-from stl.mesh import Mesh as StlMesh
 
 from classy_blocks.cbtyping import NPPointListType, NPPointType, NPVectorType, PointListType, PointType, VectorType
 from classy_blocks.util import constants
@@ -314,22 +313,32 @@ def flatten_2d_list(twodim: list[list]) -> list:
     return list(chain.from_iterable(twodim))
 
 
+@jit
 def project_points_to_stl_along_vector(
-    points: NPPointListType, stl_mesh: StlMesh, direction: VectorType
+    points: NPPointListType, stl_mesh: np.ndarray, direction: VectorType
 ) -> NPPointListType:
+    """Projects a list of points on a stl file along the direction of a vector.
+    stl_mesh is an n x 9 array n x (x1, y1, z1, x2, y2, z2, x3, y3, z3). Defining the vertices of n triangles."""
+
     intersect_points = np.zeros(points.shape)
     eps = 0.000001
 
-    edge1 = stl_mesh.v1 - stl_mesh.v0
-    edge2 = stl_mesh.v2 - stl_mesh.v0
+    # list of vertices
+    v0 = stl_mesh[:, :3]
+    v1 = stl_mesh[:, 3:6]
+    v2 = stl_mesh[:, 6:]
 
+    edge1 = v1 - v0
+    edge2 = v2 - v0
+
+    # Loop through points and project each point
     for i, p in enumerate(points):
         all_t = np.zeros(len(edge1))
         intersected = np.full((len(edge1)), True)
 
-        pvec = np.cross(direction, edge2)
+        p_vec = np.cross(direction, edge2)
 
-        det = np.sum(edge1 * pvec, axis=1)
+        det = np.sum(edge1 * p_vec, axis=1)
 
         non_intersecting_original_indices = np.absolute(det) < eps
 
@@ -338,17 +347,17 @@ def project_points_to_stl_along_vector(
 
         inv_det = 1.0 / det
 
-        tvec = p - stl_mesh.v0
+        t_vec = p - v0
 
-        u = np.sum(tvec * pvec, axis=1) * inv_det
+        u = np.sum(t_vec * p_vec, axis=1) * inv_det
 
         non_intersecting_original_indices = (u < 0.0) + (u > 1.0)
         all_t[non_intersecting_original_indices] = np.nan
         intersected[non_intersecting_original_indices] = False
 
-        qvec = np.cross(tvec, edge1)
+        q_vec = np.cross(t_vec, edge1)
 
-        v = np.sum(direction * qvec, axis=1) * inv_det
+        v = np.sum(direction * q_vec, axis=1) * inv_det
 
         non_intersecting_original_indices = (v < 0.0) + (u + v > 1.0)
 
@@ -357,7 +366,7 @@ def project_points_to_stl_along_vector(
 
         t = (
             np.sum(
-                edge2 * qvec,
+                edge2 * q_vec,
                 axis=1,
             )
             * inv_det
