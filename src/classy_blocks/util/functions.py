@@ -379,7 +379,7 @@ def project_points_to_stl_along_vector(
         intersecting_original_indices = np.invert(non_intersecting_original_indices)
         all_t[intersecting_original_indices] = t[intersecting_original_indices]
 
-        if any(intersected):
+        if np.any(intersected):
             intersect_points[i] = p + min(all_t[intersected]) * direction
         else:
             intersect_points[i] = p
