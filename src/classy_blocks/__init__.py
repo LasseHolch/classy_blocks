@@ -28,7 +28,7 @@ from .construct.operations.revolve import Revolve
 from .construct.operations.wedge import Wedge
 from .construct.shape import ExtrudedShape, LoftedShape, RevolvedShape, Shape
 from .construct.shapes.cylinder import Cylinder, QuarterCylinder, SemiCylinder
-from .construct.shapes.elbow import Elbow
+from .construct.shapes.elbow import Elbow, SemiElbow
 from .construct.shapes.frustum import Frustum, SemiFrustum
 from .construct.shapes.rings import ExtrudedRing, RevolvedRing
 from .construct.shapes.shell import Shell
@@ -115,6 +115,7 @@ __all__ = [
     "RoundSolidFinder",
     "Scaling",
     "SemiCylinder",
+    "SemiElbow",
     "SemiFrustum",
     "Shape",
     "ShapeOptimizer",
