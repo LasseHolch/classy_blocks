@@ -706,7 +706,7 @@ class QuarterSplineRing(QuarterSplineDisk):
         super().__init__(center_point, corner_1_point, corner_2_point, side_1, side_2, **kwargs)
 
     def correct_disk(self, corner_1_point: NPPointType, corner_2_point: NPPointType):
-        """Method to convert a disk to a ting"""
+        """Method to convert a disk to a ring"""
 
         # First adjust circular disk to SplineDisk
         super().correct_disk(corner_1_point, corner_2_point)
@@ -763,6 +763,14 @@ class QuarterSplineRing(QuarterSplineDisk):
     @property
     def core(self):
         return None
+
+    @property
+    def inner_radius_point_1(self) -> NPPointType:
+        return self.shell[0].point_array[0]
+
+    @property
+    def inner_radius_point_2(self) -> NPPointType:
+        return self.shell[1].point_array[3]
 
 
 class HalfSplineRing(HalfSplineDisk):
@@ -876,6 +884,14 @@ class HalfSplineRing(HalfSplineDisk):
     def core(self):
         return None
 
+    @property
+    def inner_radius_point_1(self) -> NPPointType:
+        return self.shell[0].point_array[0]
+
+    @property
+    def inner_radius_point_2(self) -> NPPointType:
+        return self.shell[1].point_array[3]
+
 
 class SplineRing(SplineDisk):
     """Ring based on SplineRound."""
@@ -931,33 +947,33 @@ class SplineRing(SplineDisk):
         self.remove_core()
 
         # Adjust inner curve to be oval/elliptical
-        r_1 = self.radius_1 - self.side_1 - self.width_1
-        r_2 = self.radius_2 - self.side_2 - self.width_2
+        r_1 = f.norm(corner_1_point - self.origo) - self.side_1 - self.width_1
+        r_2 = f.norm(corner_2_point - self.origo) - self.side_2 - self.width_2
 
         pos = self.positions
         pos[0] = self.radius_1_point - self.width_1 * self.u_1
         pos[1] = (
             self.origo
-            + (self.side_1 + r_1 * np.cos(np.pi / 4)) * self.u_1
-            + (self.side_2 + r_2 * np.sin(np.pi / 4)) * self.u_2
+            + (self.side_1 + r_1 * np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4)) * self.u_1
+            + (self.side_2 + r_2 * np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4)) * self.u_2
         )
         pos[2] = self.radius_2_point - self.width_2 * self.u_2
         pos[3] = (
             self.origo
-            - (self.side_1 + r_1 * np.cos(np.pi / 4)) * self.u_1
-            + (self.side_2 + r_2 * np.sin(np.pi / 4)) * self.u_2
+            - (self.side_1 + r_1 * np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4)) * self.u_1
+            + (self.side_2 + r_2 * np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4)) * self.u_2
         )
         pos[4] = self.origo - (self.radius_1 - self.width_1) * self.u_1
         pos[5] = (
             self.origo
-            - (self.side_1 + r_1 * np.cos(np.pi / 4)) * self.u_1
-            - (self.side_2 + r_2 * np.sin(np.pi / 4)) * self.u_2
+            - (self.side_1 + r_1 * np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4)) * self.u_1
+            - (self.side_2 + r_2 * np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4)) * self.u_2
         )
         pos[6] = self.origo - (self.radius_2 - self.width_2) * self.u_2
         pos[7] = (
             self.origo
-            + (self.side_1 + r_1 * np.cos(np.pi / 4)) * self.u_1
-            - (self.side_2 + r_2 * np.sin(np.pi / 4)) * self.u_2
+            + (self.side_1 + r_1 * np.sin(self.core_ratio_1 / self.core_ratio * np.pi / 4)) * self.u_1
+            - (self.side_2 + r_2 * np.cos(self.core_ratio_1 / self.core_ratio * np.pi / 4)) * self.u_2
         )
         self.update(pos)
 
@@ -998,3 +1014,11 @@ class SplineRing(SplineDisk):
     @property
     def core(self):
         return None
+
+    @property
+    def inner_radius_point_1(self) -> NPPointType:
+        return self.shell[0].point_array[0]
+
+    @property
+    def inner_radius_point_2(self) -> NPPointType:
+        return self.shell[1].point_array[3]

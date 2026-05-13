@@ -43,7 +43,7 @@ class Annulus(Sketch):
 
         self.core: list[Face] = []
         self.shell = [face.copy().rotate(i * segment_angle, normal, center_point) for i in range(n_segments)]
-
+        self.chops = [[0], list(range(n_segments))]
         if self.inner_radius > self.outer_radius:
             raise AnnulusCreationError(
                 "Outer ring radius must be larger than inner!",
